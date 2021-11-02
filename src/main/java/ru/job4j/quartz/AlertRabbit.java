@@ -13,18 +13,20 @@ import static org.quartz.SimpleScheduleBuilder.*;
 
 public class AlertRabbit {
 
-    private static Properties properties;
-
-    private static void readerProperties() {
-        properties = new Properties();
+    public static int readerProperties() {
+        int interval = 0;
         try {
             InputStream in =
                     AlertRabbit.class.getClassLoader()
                             .getResourceAsStream("rabbit.properties");
-           properties.load(in);
+            Properties properties = new Properties();
+            properties.load(in);
+            interval = Integer.parseInt(properties.getProperty("rabbit.interval"));
         } catch (IOException e) {
             e.printStackTrace();
         }
+        return interval;
+
     }
 
     public static void main(String[] args) {
@@ -32,9 +34,8 @@ public class AlertRabbit {
             Scheduler scheduler = StdSchedulerFactory.getDefaultScheduler();
             scheduler.start();
             JobDetail job = newJob(Rabbit.class).build();
-            readerProperties();
             SimpleScheduleBuilder times = simpleSchedule()
-                    .withIntervalInSeconds(10)
+                    .withIntervalInSeconds(readerProperties())
                     .repeatForever();
             Trigger trigger = newTrigger()
                     .startNow()
@@ -48,7 +49,7 @@ public class AlertRabbit {
 
     public static class Rabbit implements Job {
         @Override
-        public void execute(JobExecutionContext context) throws JobExecutionException {
+        public void execute(JobExecutionContext context) {
             System.out.println("Rabbit runs here ...");
         }
     }
