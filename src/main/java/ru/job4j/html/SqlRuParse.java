@@ -13,6 +13,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 
 import java.util.List;
+import java.util.Objects;
 
 public class SqlRuParse implements Parse {
 
@@ -23,31 +24,46 @@ public class SqlRuParse implements Parse {
     }
 
     @Override
-    public List<Post> list(String link) throws IOException {
+    public List<Post> list(String link) {
         List<Post> postList = new ArrayList<>();
-        Document document = Jsoup.connect(link).get();
-        Elements row = document.select(".postslisttopic");
+        String linkNum = null;
+        for (int i = 1; i <= 5; i++) {
+            linkNum = link + i;
+        }
+        Document document = null;
+        try {
+            document = Jsoup.connect(linkNum).get();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        Elements row = Objects.requireNonNull(document).select(".postslisttopic");
         for (Element td : row) {
             Element href = td.child(0);
             postList.add(detail(href.attr("href")));
         }
+
         return postList;
     }
 
     @Override
-    public Post detail(String link) throws IOException {
-        Document doc = Jsoup.connect(link).get();
-        String title = doc.selectFirst(".messageHeader").text();
+    public Post detail(String link) {
+        Document doc = null;
+        try {
+            doc = Jsoup.connect(link).get();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        String title = Objects.requireNonNull(doc).selectFirst(".messageHeader").text();
         String description = doc.select(".msgBody").get(1).text();
         String time = doc.selectFirst(".msgFooter").text();
         LocalDateTime created = dateTimeParser.parse(time.substring(0, time.indexOf("[")));
         return new Post(title, link, description, created);
     }
 
-    public static void main(String[] args) throws Exception {
+    public static void main(String[] args) {
         DateTimeParser data = new SqlRuDateTimeParser();
         SqlRuParse sqlRuParse = new SqlRuParse(data);
-        List<Post> posts = sqlRuParse.list("https://www.sql.ru/forum/job-offers/1");
+        List<Post> posts = sqlRuParse.list("https://www.sql.ru/forum/job-offers/");
         System.out.println(posts.get(3).getTitle());
         System.out.println(posts.get(3).getCreated());
         System.out.println(posts.get(3).getDescription());
