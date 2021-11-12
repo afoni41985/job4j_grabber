@@ -80,7 +80,7 @@ public class PsqlStore implements Store, AutoCloseable {
     public Post findById(int id) {
         Post post = new Post();
         try (PreparedStatement st =
-                     cnn.prepareStatement("select * from items where id = ?")) {
+                     cnn.prepareStatement("select * from post where id = ?")) {
             st.setInt(1, id);
             try (ResultSet resultSet = st.executeQuery()) {
                 if (resultSet.next()) {
@@ -108,9 +108,10 @@ public class PsqlStore implements Store, AutoCloseable {
         SqlRuParse sqlRuParse = new SqlRuParse(data);
         Properties pr = new Properties();
         PsqlStore psqlStore = new PsqlStore(pr);
-        Post post = sqlRuParse.detail("https://www.sql.ru/forum/1339681/tinkoff");
-        psqlStore.save(post);
-        System.out.println(psqlStore.findById(1));
+        List<Post> post = sqlRuParse.list("https://www.sql.ru/forum/job-offers/");
+        psqlStore.save(post.get(1));
+        psqlStore.save(post.get(2));
         System.out.println(psqlStore.getAll());
+        System.out.println(psqlStore.findById(1));
     }
 }
