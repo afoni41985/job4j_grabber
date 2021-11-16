@@ -8,7 +8,9 @@ import ru.job4j.html.Post;
 import ru.job4j.html.SqlRuParse;
 
 import java.io.*;
+import java.text.ParseException;
 import java.util.List;
+import java.util.Objects;
 import java.util.Properties;
 
 import static org.quartz.JobBuilder.newJob;
@@ -19,7 +21,7 @@ public class Grabber implements Grab {
     private final Properties cfg = new Properties();
 
     public Store store() {
-       return new PsqlStore(cfg);
+        return new PsqlStore(cfg);
     }
 
     public Scheduler scheduler() throws SchedulerException {
@@ -58,18 +60,29 @@ public class Grabber implements Grab {
     public static class GrabJob implements Job {
 
         @Override
-        public void execute(JobExecutionContext context)  {
+        public void execute(JobExecutionContext context) {
             JobDataMap map = context.getJobDetail().getJobDataMap();
             Store store = (Store) map.get("store");
             Parse parse = (Parse) map.get("parse");
+            List<Post> posts = null;
             try {
-                List<Post> posts = parse.list("https://www.sql.ru/forum/job-offers/");
-                for (Post post: posts) {
-                    store.save(post);
-                    System.out.println(post);
+                posts = parse.list("https://www.sql.ru/forum/job-offers/");
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            for (Post post : Objects.requireNonNull(posts)) {
+                try {
+                    post = parse.detail(post.getLink());
+                    if (post.getTitle().toLowerCase().contains("java")
+                            || post.getDescription().toLowerCase().contains("java")
+                            && !post.getTitle().toLowerCase().contains("script")
+                    || !post.getDescription().toLowerCase().contains("script")) {
+                        store.save(post);
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
                 }
-            } catch (IllegalArgumentException | IOException ex) {
-                ex.printStackTrace();
+                System.out.println(post);
             }
         }
     }
