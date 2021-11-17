@@ -11,7 +11,6 @@ import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.charset.Charset;
-import java.text.ParseException;
 import java.util.List;
 import java.util.Objects;
 import java.util.Properties;
@@ -77,9 +76,7 @@ public class Grabber implements Grab {
                 try {
                     post = parse.detail(post.getLink());
                     if (post.getTitle().toLowerCase().contains("java")
-                            || post.getDescription().toLowerCase().contains("java")
-                            && !post.getTitle().toLowerCase().contains("script")
-                            || !post.getDescription().toLowerCase().contains("script")) {
+                            && !post.getTitle().toLowerCase().contains("script")) {
                         store.save(post);
                     }
                 } catch (IOException e) {
