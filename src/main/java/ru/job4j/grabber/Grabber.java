@@ -8,6 +8,9 @@ import ru.job4j.html.Post;
 import ru.job4j.html.SqlRuParse;
 
 import java.io.*;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.nio.charset.Charset;
 import java.text.ParseException;
 import java.util.List;
 import java.util.Objects;
@@ -76,7 +79,7 @@ public class Grabber implements Grab {
                     if (post.getTitle().toLowerCase().contains("java")
                             || post.getDescription().toLowerCase().contains("java")
                             && !post.getTitle().toLowerCase().contains("script")
-                    || !post.getDescription().toLowerCase().contains("script")) {
+                            || !post.getDescription().toLowerCase().contains("script")) {
                         store.save(post);
                     }
                 } catch (IOException e) {
@@ -87,6 +90,28 @@ public class Grabber implements Grab {
         }
     }
 
+    public void web(Store store) {
+        new Thread(() -> {
+            try (ServerSocket server = new ServerSocket(
+                    Integer.parseInt(cfg.getProperty("jdbc.port")))) {
+                while (!server.isClosed()) {
+                    Socket socket = server.accept();
+                    try (OutputStream out = socket.getOutputStream()) {
+                        out.write("HTTP/1.1 200 OK\r\n\r\n".getBytes());
+                        for (Post post : store.getAll()) {
+                            out.write(post.toString().getBytes(Charset.forName("Windows-1251")));
+                            out.write(System.lineSeparator().getBytes());
+                        }
+                    } catch (IOException io) {
+                        io.printStackTrace();
+                    }
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }).start();
+    }
+
     public static void main(String[] args) throws Exception {
         Grabber grab = new Grabber();
         grab.cfg();
@@ -94,5 +119,6 @@ public class Grabber implements Grab {
         Store store = grab.store();
         DateTimeParser date = new SqlRuDateTimeParser();
         grab.init(new SqlRuParse(date), store, scheduler);
+        grab.web(store);
     }
 }
