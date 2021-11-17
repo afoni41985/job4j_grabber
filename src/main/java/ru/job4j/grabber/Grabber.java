@@ -78,11 +78,11 @@ public class Grabber implements Grab {
                     if (post.getTitle().toLowerCase().contains("java")
                             && !post.getTitle().toLowerCase().contains("script")) {
                         store.save(post);
+                        System.out.println(post);
                     }
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-                System.out.println(post);
             }
         }
     }

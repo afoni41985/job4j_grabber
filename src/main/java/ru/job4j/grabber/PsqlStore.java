@@ -99,7 +99,6 @@ public class PsqlStore implements Store, AutoCloseable {
                 resultSet.getString("text"),
                 resultSet.getString("link"),
                 resultSet.getTimestamp("created").toLocalDateTime());
-
     }
 
     public static void main(String[] args) {
