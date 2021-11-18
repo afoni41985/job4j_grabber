@@ -34,9 +34,9 @@ join company c
 on p.company_id = c.id where c.id != 5;
 
 
-select c.name, count(*) persons
-from person p join company c on p.company_id = c.id group by c.name
-having count(*) = (select max(persons)
-from (select count(*) persons
-from person p join company c on p.company_id = c.id
-group by c)t1);
+select c.name company, count(p.company_id) people
+	from company c
+	join person p on p.company_id = c.id
+	group by c.name
+	order by count(*)
+	desc limit 1;
